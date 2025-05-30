@@ -49,7 +49,4 @@ buildNumber.properties
 *.tmp
 *.temp
 *~
-~*/
-
-# 备份文件夹
-*/ 
+~*/ 

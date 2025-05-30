@@ -1,0 +1,14 @@
+version: '3'
+services:
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    # 配置Redis开启键空间通知，Ex表示只监听过期事件
+    command: redis-server --notify-keyspace-events Ex
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+volumes:
+  redis_data: 

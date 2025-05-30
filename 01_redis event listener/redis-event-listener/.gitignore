@@ -1,0 +1,123 @@
+### Java ###
+# 编译后的class文件
+*.class
+
+# 日志文件
+*.log
+
+# BlueJ文件
+*.ctxt
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
+# 打包文件
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# 虚拟机崩溃日志
+hs_err_pid*
+replay_pid*
+
+### Gradle ###
+.gradle
+**/build/
+!src/**/build/
+
+# 忽略Gradle GUI配置
+gradle-app.setting
+
+# 避免在有多个Gradle版本的环境中忽略gradle包装器jar文件
+!gradle-wrapper.jar
+
+# 避免忽略Gradle wrapper属性
+!gradle-wrapper.properties
+
+# 缓存目录
+.gradletasknamecache
+
+# Eclipse Gradle插件生成的文件
+# Eclipse Gradle plugin generated files
+# Eclipse Core
+.project
+# JDT-specific (Eclipse Java Development Tools)
+.classpath
+
+### STS (Spring Tool Suite) ###
+.apt_generated
+.factorypath
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
+.vscode/
+
+### Spring Boot ###
+*#
+*.sw?
+.#*
+*~
+
+# 应用程序属性中的证书
+application-*.yml
+application-*.yaml
+application-*.properties
+!application.yml
+!application.yaml
+!application.properties
+!application-example.yml
+!application-example.yaml
+!application-example.properties
+
+### 操作系统 ###
+# Mac
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msm
+*.msp
+
+# Linux
+*~
+.directory
+.Trash-*
+
+### 项目特定忽略项 ###
+# Redis数据库
+dump.rdb
+*.rdb 
