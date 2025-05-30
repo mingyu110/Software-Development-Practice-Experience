@@ -1,0 +1,14 @@
+version: '3'
+services:
+  redis:
+    image: alibaba-cloud-linux-3-registry.cn-hangzhou.cr.aliyuncs.com/alinux3/redis_optimized:20240221-6.2.7-2.3.0
+    ports:
+      - "6379:6379"
+    # 配置Redis开启键空间通知，Ex表示只监听过期事件
+    command: redis-server --notify-keyspace-events Ex
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+volumes:
+  redis_data: 
