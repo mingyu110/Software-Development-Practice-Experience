@@ -8,7 +8,7 @@
 
 ## 2. 系统架构
 
-![系统架构图](./high-performance-payment-system/architecture.png)
+![系统架构图](./architecture.png)
 
 系统采用微服务架构设计，核心组件包括：
 
