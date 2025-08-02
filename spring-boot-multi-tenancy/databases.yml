@@ -1,0 +1,31 @@
+# This file contains the database configurations for each tenant.
+# It is imported by the main application.yml.
+
+data-sources:
+  - url: jdbc:postgresql://localhost:5432/tenant_1_db
+    username: user1
+    password: password1
+    driver-class-name: org.postgresql.Driver
+    minimum-idle: 2
+    maximum-pool-size: 5
+    tenants:
+      - tenant_1
+
+  - url: jdbc:postgresql://localhost:5432/tenant_2_db
+    username: user2
+    password: password2
+    driver-class-name: org.postgresql.Driver
+    minimum-idle: 2
+    maximum-pool-size: 5
+    tenants:
+      - tenant_2
+
+  - url: jdbc:postgresql://localhost:5432/shared_db
+    username: shared_user
+    password: shared_password
+    driver-class-name: org.postgresql.Driver
+    minimum-idle: 2
+    maximum-pool-size: 5
+    tenants:
+      - tenant_3
+      - tenant_4

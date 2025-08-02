@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: spring-boot-multi-tenancy
+  config:
+    import: "optional:file:./databases.yml"
+
+# Disable Spring Boot's default Flyway migration on startup
+# We will handle it manually for each tenant
+  flyway:
+    enabled: false
+
+server:
+  port: 8080
