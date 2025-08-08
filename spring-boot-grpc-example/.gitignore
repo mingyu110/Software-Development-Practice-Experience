@@ -1,0 +1,22 @@
+# IDE files
+.idea/
+*.iml
+*.iws
+
+# Build files
+/target/
+
+# Log files
+*.log
+
+# Maven
+.mvn/
+mvnw
+mvnw.cmd
+
+# OS files
+.DS_Store
+
+# Go client specific
+/go-client/TddService.proto
+/go-client/tdd_v1/

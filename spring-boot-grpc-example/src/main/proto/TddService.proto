@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.tdd.app";
+option go_package = "./tdd_v1";
+
+package tdd_v1;
+
+import "google/protobuf/empty.proto";
+
+service Tdd_V1 {
+  rpc TLV1(google.protobuf.Empty) returns (ResponseSingle) {}
+  rpc TLV2(RequestForm) returns (stream ResponseSingle) {}
+}
+
+message RequestForm {
+  string req = 1;
+}
+
+message ResponseSingle {
+  string message = 1;
+}
