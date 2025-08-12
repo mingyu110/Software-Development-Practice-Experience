@@ -16,7 +16,7 @@
 | **Spring Boot** | `3.2.5` | 项目的基础框架，提供了强大的自动配置和依赖管理。 |
 | **Spring Cloud** | `2023.0.1` | Spring官方的微服务解决方案，版本代号为 "Leyton"。 |
 | **构建工具** | Maven | 业界主流的Java项目构建和依赖管理工具。 |
-| **容器化** | Docker & Docker Compose | 用于打包和一键编排所有服务及依赖。 |
+| **容器化** | Docker  | 用于打包和一键编排所有服务及依赖。 |
 
 ### 版本适配关系
 
@@ -29,51 +29,6 @@ Spring Boot 和 Spring Cloud 的版本之间有严格的对应关系。错误的
 ## 3. 架构设计
 
 本系统采用经典的微服务架构模式，将复杂的单体应用拆分为多个职责单一、松耦合的服务。服务之间通过轻量级的HTTP协议（RESTful API）和消息队列进行通信。
-
-### 架构图 (Mermaid)
-
-```mermaid
-graph TD
-    subgraph "客户端 (Client)"
-        User[用户]
-    end
-
-    subgraph "基础设施 (Infrastructure)"
-        RabbitMQ[消息队列 RabbitMQ]
-        ConfigRepo[配置仓库 Git Repo]
-    end
-
-    subgraph "微服务应用 (Microservices)"
-        A[API网关 Api Gateway]
-        B[注册中心 Discovery Server]
-        C[配置中心 Config Server]
-        D[认证服务 Auth Service]
-        E[订单服务 Order Service]
-        F[支付服务 Payment Service]
-    end
-
-    User -- "1. 登录/请求" --> A
-    A -- "2. 路由/鉴权" --> D
-    A -- "3. 路由" --> E
-    A -- "4. 路由" --> F
-
-    C -- "从Git拉取配置" --> ConfigRepo
-    
-    B -.-> A
-    B -.-> C
-    B -.-> D
-    B -.-> E
-    B -.-> F
-
-    A -- "获取服务地址" --> B
-    C -- "注册" --> B
-    D -- "注册/获取配置" --> B & C
-    E -- "注册/获取配置" --> B & C
-    F -- "注册/获取配置" --> B & C
-
-    E -- "5. 发送支付消息 (Saga)" --> RabbitMQ
-    RabbitMQ -- "6. 消费消息" --> F
-```
 
 ## 4. 核心组件详解
 
@@ -139,7 +94,3 @@ graph TD
     - `order-service` 在创建订单（本地事务）后，向 `RabbitMQ` 发送一条“待支付”消息。
     - `payment-service` 监听此消息，并执行支付操作（本地事务）。
     - 这种方式确保了订单和支付的最终一致性，并且服务间没有直接的HTTP调用，耦合度更低。
-
-## 5. 本地部署与运行
-
-请参考项目根目录下的 `README.md` 文件，使用 `docker-compose` 一键启动所有服务。
