@@ -1,0 +1,145 @@
+# Spring Cloud 微服务项目架构手册
+
+## 1. 项目概述
+
+本项目（`spring-cloud-microservices-showcase`）旨在通过一个具体的电商下单场景，全面展示如何使用 Spring Cloud 全家桶及相关主流技术栈构建一套稳定、可扩展的微服务体系。它不仅是可运行的代码实现，更是一份详尽的微服务架构实践指南，适合开发者学习和参考。
+
+项目实现了服务治理、统一配置、API网关、安全认证、分布式事务等微服务架构中的核心要素，并提供一键式的本地部署方案。
+
+## 2. 核心技术栈与版本选型
+
+选择稳定且主流的技术版本是保障项目成功的基础。本项目基于 **Spring Boot 3.x** 和 **Spring Cloud 2023.x** 构建，具体的技术栈和版本对应关系如下：
+
+| 技术/组件 | 版本 | 说明 |
+| :--- | :--- | :--- |
+| **Java** | `21` | 长期支持（LTS）版本，提供虚拟线程等新特性。 |
+| **Spring Boot** | `3.2.5` | 项目的基础框架，提供了强大的自动配置和依赖管理。 |
+| **Spring Cloud** | `2023.0.1` | Spring官方的微服务解决方案，版本代号为 "Leyton"。 |
+| **构建工具** | Maven | 业界主流的Java项目构建和依赖管理工具。 |
+| **容器化** | Docker & Docker Compose | 用于打包和一键编排所有服务及依赖。 |
+
+### 版本适配关系
+
+Spring Boot 和 Spring Cloud 的版本之间有严格的对应关系。错误的版本组合可能导致依赖冲突或无法预料的错误。本项目遵循官方推荐的组合：
+
+- **Spring Boot `3.2.x`** 适配 **Spring Cloud `2023.0.x`**。
+
+这个组合确保了所有Spring组件之间的兼容性和稳定性。
+
+## 3. 架构设计
+
+本系统采用经典的微服务架构模式，将复杂的单体应用拆分为多个职责单一、松耦合的服务。服务之间通过轻量级的HTTP协议（RESTful API）和消息队列进行通信。
+
+### 架构图 (Mermaid)
+
+```mermaid
+graph TD
+    subgraph "客户端 (Client)"
+        User[用户]
+    end
+
+    subgraph "基础设施 (Infrastructure)"
+        RabbitMQ[消息队列 RabbitMQ]
+        ConfigRepo[配置仓库 Git Repo]
+    end
+
+    subgraph "微服务应用 (Microservices)"
+        A[API网关 Api Gateway]
+        B[注册中心 Discovery Server]
+        C[配置中心 Config Server]
+        D[认证服务 Auth Service]
+        E[订单服务 Order Service]
+        F[支付服务 Payment Service]
+    end
+
+    User -- "1. 登录/请求" --> A
+    A -- "2. 路由/鉴权" --> D
+    A -- "3. 路由" --> E
+    A -- "4. 路由" --> F
+
+    C -- "从Git拉取配置" --> ConfigRepo
+    
+    B -.-> A
+    B -.-> C
+    B -.-> D
+    B -.-> E
+    B -.-> F
+
+    A -- "获取服务地址" --> B
+    C -- "注册" --> B
+    D -- "注册/获取配置" --> B & C
+    E -- "注册/获取配置" --> B & C
+    F -- "注册/获取配置" --> B & C
+
+    E -- "5. 发送支付消息 (Saga)" --> RabbitMQ
+    RabbitMQ -- "6. 消费消息" --> F
+```
+
+## 4. 核心组件详解
+
+### 4.1. 服务注册与发现: Eureka
+
+- **组件介绍**: `Netflix Eureka` 是一个服务发现组件。在微服务架构中，每个服务的网络地址（IP和端口）可能是动态变化的，Eureka提供了一个“服务通讯录”，让各个服务能够找到彼此。
+- **核心功能**:
+    1.  **服务注册**: 微服务启动时，将自己的地址信息注册到Eureka Server。
+    2.  **服务发现**: 服务需要调用其他服务时，从Eureka Server查询目标服务的地址列表。
+    3.  **心跳续约**: 服务会周期性地向Eureka Server发送心跳，证明自己还“活着”。如果长时间没有心跳，Eureka会将其从服务列表中剔除。
+- **本项目应用**:
+    - `discovery-server` 模块扮演了 **Eureka Server** 的角色。
+    - 其他所有微服务都内嵌了 **Eureka Client**，在启动时自动向`discovery-server`注册。
+
+### 4.2. 统一配置中心: Spring Cloud Config
+
+- **组件介绍**: `Spring Cloud Config` 提供了一套集中管理所有微服务配置的解决方案。它将配置文件存储在外部的存储系统（如Git仓库）中，实现了配置与代码的分离。
+- **核心功能**:
+    1.  **集中管理**: 所有服务的配置文件（如`order-service.yml`）都存储在一个统一的Git仓库中。
+    2.  **动态刷新**: 无需重启服务，即可通过特定端点（`/actuator/refresh`）刷新配置。
+    3.  **环境隔离**: 支持按环境（dev, test, prod）和应用名管理不同的配置文件。
+- **本项目应用**:
+    - `config-server` 模块扮演了 **Config Server** 的角色，它连接到本地的 `config-repo` 目录（模拟Git仓库）。
+    - 其他业务服务通过 `bootstrap.yml` 中配置的地址，在启动时从`config-server`拉取自己的配置。
+
+### 4.3. API网关: Spring Cloud Gateway
+
+- **组件介绍**: `Spring Cloud Gateway` 是一个基于Spring 5、Project Reactor和Spring Boot 2构建的API网关。它是所有外部请求进入微服务系统的唯一入口。
+- **核心功能**:
+    1.  **动态路由**: 根据请求的路径或其他条件，将请求转发到后端的正确服务。路由信息可以与Eureka集成，实现动态更新。
+    2.  **安全屏障**: 作为系统的唯一入口，可以统一处理安全认证、鉴权等逻辑。
+    3.  **横切关注点**: 实现限流、熔断、日志记录、请求/响应转换等通用功能。
+- **本项目应用**:
+    - `api-gateway` 模块负责所有路由逻辑。它从Eureka动态发现服务，并根据路径（如`/orders/**`）将请求转发给`order-service`。
+
+### 4.4. 认证与授权: Spring Security & JWT
+
+- **组件介绍**:
+    - `Spring Security` 是Spring生态中功能最强大的安全框架，提供全面的认证和授权功能。
+    - `JWT (JSON Web Token)` 是一种轻量级的、自包含的令牌标准，特别适合在分布式系统中传递身份信息。
+- **核心功能**:
+    1.  **认证 (Authentication)**: 用户通过用户名密码登录，`auth-service`验证通过后，生成一个包含用户信息的JWT。
+    2.  **授权 (Authorization)**: 用户访问受保护的API时，必须在请求头中携带JWT。API网关会拦截并校验此JWT的有效性，通过后才将请求转发到后端服务。
+- **本项目应用**:
+    - `auth-service` 负责处理用户登录并颁发JWT。
+    - `api-gateway` 集成Spring Security，负责拦截和校验所有请求中的JWT。
+
+### 4.5. 服务间调用: OpenFeign
+
+- **组件介绍**: `OpenFeign` 是一个声明式的REST客户端。它让编写HTTP客户端变得像调用本地方法一样简单。
+- **核心功能**:
+    1.  **声明式API**: 只需定义一个Java接口，并添加相关注解（如`@FeignClient`），即可完成对远端API的调用。
+    2.  **负载均衡**: 自动与Eureka和Spring Cloud LoadBalancer集成，实现对目标服务实例的客户端负载均衡。
+- **本项目应用**:
+    - `order-service` 如果需要调用其他服务（例如`payment-service`的查询接口），可以定义一个Feign接口，而无需手动编写`RestTemplate`或`WebClient`代码。
+
+### 4.6. 分布式事务 (Saga): RabbitMQ
+
+- **问题背景**: 在微服务架构中，一个业务操作（如下单）可能跨越多个服务（订单服务、支付服务、库存服务）。由于没有全局数据库事务，如何保证这些操作的最终一致性是一个巨大挑战。
+- **Saga模式**: Saga是一种最终一致性的分布式事务解决方案。它将一个长事务拆分为多个本地事务，每个本地事务都有一个对应的补偿操作。如果某个步骤失败，则依次调用前面已成功步骤的补偿操作来回滚。
+- **本项目应用**:
+    - 我们使用 **编排式Saga** 的思想，通过消息队列来解耦服务。
+    - `order-service` 在创建订单（本地事务）后，向 `RabbitMQ` 发送一条“待支付”消息。
+    - `payment-service` 监听此消息，并执行支付操作（本地事务）。
+    - 这种方式确保了订单和支付的最终一致性，并且服务间没有直接的HTTP调用，耦合度更低。
+
+## 5. 本地部署与运行
+
+请参考项目根目录下的 `README.md` 文件，使用 `docker-compose` 一键启动所有服务。

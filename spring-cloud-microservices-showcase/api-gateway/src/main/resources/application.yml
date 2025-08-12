@@ -1,0 +1,12 @@
+# Configuration is now loaded from the Config Server.
+# This file can be used for properties that are not managed by the config server
+# or for local development overrides.
+
+spring:
+  config:
+    import: "configserver:"
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://discovery-server:8761/eureka/
